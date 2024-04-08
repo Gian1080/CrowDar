@@ -9,15 +9,11 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-
 import tensorflow as tf
-import object_detection
-from object_detection.utils import config_util
-from object_detection.builders import model_builder
-from object_detection.utils import label_map_util
-from object_detection.utils import visualization_utils as viz_utils
-from object_detection.utils import ops as utils_ops
 
+from tensorflow import keras
+from keras import layers
+from keras.models import Sequential
 
 print('')
 print('')
@@ -66,3 +62,25 @@ valid_IDS = valid_images.keys()
 valid_images_list = [valid_images[id] for id in valid_IDS]
 valid_bbox_list  = [valid_bbox[id] for id in valid_IDS]
 
+batch_size = 32
+img_height = 256
+img_width = 256
+
+train_ds = tf.keras.utils.image_dataset_from_directory(
+  train_paths,
+  validation_split=0.2,
+  subset="training",
+  seed=123,
+  image_size=(img_height, img_width),
+  batch_size=batch_size)
+
+val_ds = tf.keras.utils.image_dataset_from_directory(
+  valid_paths,
+  validation_split=0.2,
+  subset="validation",
+  seed=123,
+  image_size=(img_height, img_width),
+  batch_size=batch_size)
+
+class_names = train_ds.class_names
+print(class_names)
