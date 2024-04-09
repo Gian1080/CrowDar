@@ -65,4 +65,18 @@ def GetBoundingBoxByID(ID, json_data):
             return annotation['bbox']
         
 def GetBoundingBoxesByIDs(IDs, json_data):
-    return {id:GetBoundingBoxByID(id, json_data) for id in IDs}      
+    return {id:GetBoundingBoxByID(id, json_data) for id in IDs}
+
+def PillowImageArrayToNumpyArray(listOfImages, normalize = False):
+    
+    # Convert list of PIL Images to a single NumPy array
+    numpy_train_images = np.array([np.array(image) for image in listOfImages])
+
+    # Normalize pixel values if your model expects values between 0 and 1
+    if normalize:
+        numpy_train_images = numpy_train_images.astype('float32') / 255.0
+        
+    return numpy_train_images
+
+def BoundingBoxesToNumpyArray(boundingBoxes):
+    return np.array(boundingBoxes)
