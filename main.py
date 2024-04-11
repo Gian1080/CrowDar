@@ -1,11 +1,11 @@
 import preprocessing as pp
+import postprocessing as post
+import directory as dir
 import imaging as im
 import json
 from keras import layers, models
-from keras.layers import ReLU
-from keras.models import Sequential
+import datetime
 
-print('')
 print('')
 
 #Directories
@@ -66,14 +66,11 @@ numpy_valid_bbox_list = pp.BoundingBoxesToNumpyArray(valid_bbox_list)
 
 img_height = 640
 img_width = 640
-batch_size = 32
+batch_size = 16
+epoch_count = 13
 
 bigModel = models.Sequential([
-    # Initial Convolution and Max Pooling layers
-    layers.Conv2D(64, (3, 3), activation='relu', padding='same', input_shape=(img_height, img_width, 3)),
-    layers.MaxPooling2D(2, 2),
-    
-    # Adding more depth with more Convolutional Layers
+
     layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
     layers.MaxPooling2D(2, 2),
 
@@ -88,6 +85,7 @@ bigModel = models.Sequential([
 
     layers.Conv2D(512, (3, 3), activation='relu', padding='same'),
     layers.MaxPooling2D(2, 2),
+
     # Flattening the output to feed into Dense layers
     layers.Flatten(),
 
@@ -101,29 +99,39 @@ bigModel = models.Sequential([
 
 
 bigModel.compile(optimizer='adam',
-              #loss='mean_squared_error' ,
               loss = 'mean_absolute_error',
-              # loss='binary_crossentropy',
               metrics=['accuracy'])
 
-# Assuming your labels are correctly shaped, you can now fit the model
-H = bigModel.fit(numpy_train_images, numpy_train_bbox_list, epochs = 31, batch_size=batch_size, validation_data=(numpy_valid_images, numpy_valid_bbox_list))
+for image in numpy_test_images:
+    pp.AppendImageToNumpyArray(numpy_train_images, image)
 
-validation_loss = bigModel.evaluate(numpy_valid_images, numpy_valid_bbox_list)
+for bbox in numpy_test_bbox_list:
+    pp.AppenBoundingBoxToNumpyArray(numpy_train_bbox_list, bbox)
 
-S = bigModel.summary()
+#fill with prime numbers
+crow_epochs = [1, 3, 5]
+# Get the current date and time
+now = datetime.datetime.now()
+date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-print(H.history)
-print(S)
-print(f'validation loss bigger model: {validation_loss}')
+for epoch in crow_epochs:    
+    # create a unique directory for each epoch
+    unique_dir_name = dir.create_unique_result_directory(epoch, date_time)
+    # fit/train the model
+    H = bigModel.fit(numpy_train_images, numpy_train_bbox_list, epochs = epoch, batch_size=batch_size, validation_data=(numpy_valid_images, numpy_valid_bbox_list))
+    validation_loss = bigModel.evaluate(numpy_valid_images, numpy_valid_bbox_list)
+    S = bigModel.summary()
+    print(H.history)
+    print(S)
 
-# Assuming `numpy_valid_images` is your validation set images and the model is named `smallModel`
-predictions = bigModel.predict(numpy_valid_images)
-for i in range(len(numpy_valid_images)):
-    print(f'validate box" {numpy_valid_bbox_list[i]}')
-    print(f'predicted box" {predictions[i]}')
-    
-    iou = im.calculate_iou(predictions[i], numpy_valid_bbox_list[i])
-    print("IoU:", iou)
-    
-    im.draw_bounding_boxes(numpy_valid_images[i], numpy_valid_bbox_list[i], predictions[i])
+    # Assuming `numpy_valid_images` is your validation set images and the model is named `smallModel`
+    predictions = bigModel.predict(numpy_valid_images)
+    average = 0
+    counter = 0
+    for i in range(len(numpy_valid_images)):
+        iou = post.CalculateIoUNEW(predictions[i], numpy_valid_bbox_list[i])
+        counter += 1
+        average += iou
+        im.draw_bounding_boxes(i, iou, numpy_valid_images[i], numpy_valid_bbox_list[i], predictions[i], epoch, unique_dir_name)
+        
+    print(f'average iou: {average/counter} @ epoch {epoch}')

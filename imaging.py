@@ -1,73 +1,46 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+import os
+import datetime
 
-def draw_bounding_boxes(image, true_boxes, predict_boxes):
+def draw_bounding_boxes(i, predict_confidence, image, true_boxes, predict_boxes, epoch, save_path = None):
     """
     Draws bounding boxes on image.
-    image: PIL Image object.
-    boxes: Array of boxes in format [x_min, y_min, x_max, y_max] or [x_center, y_center, width, height].
+    Args:
+    image (PIL Image): PIL Image object.
+    true_boxes (list): True bounding box [x_min, y_min, width, height].
+    predict_boxes (list): Predicted bounding box [x_min, y_min, width, height].
+    save_path (str): Directory to save the image.
     """
+
+    # Ensure the save directory exists
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
     # Convert PIL Image to numpy array
     np_image = np.array(image)
     fig, ax = plt.subplots(1)
     ax.imshow(np_image)
 
-    # Convert from [x_center, y_center, width, height] if necessary
-    rectPredict = patches.Rectangle((predict_boxes[0], predict_boxes[1]), predict_boxes[2], predict_boxes[3], linewidth=1, edgecolor='g', facecolor='none')
-    ax.add_patch(rectPredict)
-    rectTrue = patches.Rectangle((true_boxes[0], true_boxes[1]), true_boxes[2], true_boxes[3], linewidth=1, edgecolor='r', facecolor='none')
+    # Add predicted bounding box
+    # Draw predicted bounding box
+    pred_label = f'Prediction: {predict_confidence * 100:.2f}% confidence'
+    pred_rect = patches.Rectangle((predict_boxes[0], predict_boxes[1]), predict_boxes[2], predict_boxes[3], linewidth=1, edgecolor='g', facecolor='none', label=pred_label)
+    ax.add_patch(pred_rect)
+    #rectPredict = patches.Rectangle((predict_boxes[0], predict_boxes[1]), predict_boxes[2], predict_boxes[3], linewidth=1, edgecolor='g', facecolor='none')
+    #ax.add_patch(rectPredict)
+
+    # Add true bounding box
+    rectTrue = patches.Rectangle((true_boxes[0], true_boxes[1]), true_boxes[2], true_boxes[3], linewidth=1, edgecolor='r', facecolor='none', label='True Box')
     ax.add_patch(rectTrue)
 
-    plt.show()
-    
-def calculate_iou(box1, box2):
-    """
-    Calculate Intersection over Union (IoU) of two bounding boxes.
+    # Add legend
+    ax.legend(loc='upper right')
 
-    Arguments:
-    box1: Tuple (x1, y1, x2, y2) representing coordinates of the first bounding box.
-    box2: Tuple (x1, y1, x2, y2) representing coordinates of the second bounding box.
-
-    Returns:
-    float: IoU value.
-    """
-    # Extract coordinates of the bounding boxes
-    x1_1, y1_1, x2_1, y2_1 = box1
-    x1_2, y1_2, x2_2, y2_2 = box2
-
-    # Calculate the coordinates of the intersection rectangle
-    x_left = max(x1_1, x1_2)
-    y_top = max(y1_1, y1_2)
-    x_right = min(x2_1, x2_2)
-    y_bottom = min(y2_1, y2_2)
-
-    # If the boxes don't intersect, return 0
-    if x_right < x_left or y_bottom < y_top:
-        return 0.0
-
-    # Calculate intersection area
-    intersection_area = (x_right - x_left) * (y_bottom - y_top)
-
-    # Calculate areas of the bounding boxes
-    area_box1 = (x2_1 - x1_1) * (y2_1 - y1_1)
-    area_box2 = (x2_2 - x1_2) * (y2_2 - y1_2)
-
-    # Calculate union area
-    union_area = area_box1 + area_box2 - intersection_area
-
-    # Calculate IoU
-    iou = intersection_area / union_area
-
-    return iou
-
-def calculate_overlap_boxes(true_box, predicted_box):
-    true_pixels = []
-    startX = int(true_box[0])
-    endX = int(true_box[1])
-    
-    startY = int(true_box[2])
-    endY = int(true_box[3])
-    for x in range(startX, endX):
-        for y in range(startY, endY):
-            true_pixels.append((x, y))
+    # Save the plot to a file
+    output_filename = f"{i}_epoch_{epoch}.png"
+    output_path = os.path.join(save_path, output_filename)
+    plt.axis('off')
+    plt.savefig(output_path, bbox_inches='tight')
+    plt.close()  # Close the figure to free memory

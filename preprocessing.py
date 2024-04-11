@@ -1,9 +1,5 @@
-import os
 import numpy as np
-import matplotlib as mpl
-import json
 from PIL import Image
-from tkinter import filedialog
 
 
 def LoadImageFromPath(path):
@@ -46,11 +42,7 @@ def GetSingleCrowsIDs(json_data):
             if datapoint['image_id'] == id:
                 number_of_crows += 1
         if number_of_crows == 1:
-            print(f"Adding {id}")
             IDs.append(id)
-        else:
-            print(f'skipping {id} number of crows: {number_of_crows}')
-    print(len(IDs))
     return IDs
 
 def GetListOfPaths(IDs, json_data, prefix):
@@ -83,3 +75,9 @@ def PillowImageArrayToNumpyArray(listOfImages, normalize = False):
 
 def BoundingBoxesToNumpyArray(boundingBoxes):
     return np.array(boundingBoxes)
+
+def AppendImageToNumpyArray(numpyArray, image):
+    return np.append(numpyArray, np.array(image))
+
+def AppenBoundingBoxToNumpyArray(numpyArray, boundingBox):
+    return np.append(numpyArray, boundingBox)
