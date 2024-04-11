@@ -1,20 +1,9 @@
 import preprocessing as pp
-from pycocotools.coco import COCO
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
-import numpy as np
+import imaging as im
 import json
-import matplotlib.pyplot as plt
-import numpy as np
-from PIL import Image
-import tensorflow as tf
-from tensorflow import keras
 from keras import layers, models
+from keras.layers import ReLU
 from keras.models import Sequential
-from keras.preprocessing import image
-import cv2
 
 print('')
 print('')
@@ -65,55 +54,23 @@ valid_IDS = valid_images.keys()
 valid_images_list = [valid_images[id] for id in valid_IDS]
 valid_bbox_list  = [valid_bbox[id] for id in valid_IDS]
 
-# batch_size = 8
+#convert bounding box to numpy arrays
+numpy_train_images = pp.PillowImageArrayToNumpyArray(train_images_list, False)
+numpy_train_bbox_list = pp.BoundingBoxesToNumpyArray(train_bbox_list)
+
+numpy_test_images = pp.PillowImageArrayToNumpyArray(test_images_list, False)
+numpy_test_bbox_list = pp.BoundingBoxesToNumpyArray(test_bbox_list)
+
+numpy_valid_images = pp.PillowImageArrayToNumpyArray(valid_images_list, False)
+numpy_valid_bbox_list = pp.BoundingBoxesToNumpyArray(valid_bbox_list)
+
 img_height = 640
 img_width = 640
+batch_size = 32
 
-# model = models.Sequential([
-#     # layers.Rescaling(1./255, input_shape=(img_height, img_width, 3)),
-#     layers.Conv2D(8, (3, 3),input_shape = (640,640,3), activation='relu'),
-#     layers.MaxPooling2D((2, 2)),
-#     layers.Conv2D(16, (3, 3), activation='relu'),
-#     layers.MaxPooling2D((2, 2)),
-#     layers.Conv2D(32, (3, 3), activation='relu'),
-#     layers.Flatten(),
-#     layers.Dense(4, activation='relu'),
-#     # layers.Dense(len(class_names), activation='sigmoid')
-# ])
-
-# model = models.Sequential([
-#     # Initial Convolution and Max Pooling layers
-#     layers.Conv2D(16, (3, 3), activation='relu', input_shape=(img_height, img_width, 3)),
-#     layers.MaxPooling2D(2, 2),
-    
-#     # Adding more depth with more Convolutional Layers
-#     layers.Conv2D(32, (3, 3), activation='relu'),
-#     layers.MaxPooling2D(2, 2),
-#     layers.Conv2D(64, (3, 3), activation='relu'),
-#     layers.MaxPooling2D(2, 2),
-    
-#     # Additional layers with increased filters
-#     layers.Conv2D(128, (3, 3), activation='relu'),
-#     layers.MaxPooling2D(2, 2),
-#     layers.Conv2D(64, (3, 3), activation='relu'),
-#     layers.MaxPooling2D(2, 2),
-#     layers.Conv2D(32, (3, 3), activation='relu'),
-#     layers.MaxPooling2D(2, 2),
-#     layers.Conv2D(16, (3, 3), activation='relu'),
-#     layers.MaxPooling2D(2, 2),
-#     layers.Flatten(),
-
-#     # Dense layers for feature interpretation
-#     layers.Dense(512, activation='relu'),
-#     layers.Dropout(0.4),  # Increased dropout for regularization
-#     # Output layer for bounding box prediction - 4 neurons for [x_center, y_center, width, height]
-#     # No activation function is used here to allow for unbounded outputs
-#     layers.Dense(4, activation=None)  # Consider removing the activation or using 'linear' if working with unbounded coordinates
-# ])
-
-model = models.Sequential([
+bigModel = models.Sequential([
     # Initial Convolution and Max Pooling layers
-    layers.Conv2D(16, (3, 3), activation='relu', padding='same', input_shape=(img_height, img_width, 3)),
+    layers.Conv2D(64, (3, 3), activation='relu', padding='same', input_shape=(img_height, img_width, 3)),
     layers.MaxPooling2D(2, 2),
     
     # Adding more depth with more Convolutional Layers
@@ -142,30 +99,31 @@ model = models.Sequential([
     layers.Dense(4, activation=None)  # Consider removing the activation or using 'linear' if working with unbounded coordinates
 ])
 
-numpy_train_images = pp.PillowImageArrayToNumpyArray(train_images_list, True)
-numpy_train_bbox_list = pp.BoundingBoxesToNumpyArray(train_bbox_list)
 
-numpy_test_images = pp.PillowImageArrayToNumpyArray(test_images_list, True)
-numpy_test_bbox_list = pp.BoundingBoxesToNumpyArray(test_bbox_list)
-
-numpy_valid_images = pp.PillowImageArrayToNumpyArray(valid_images_list, True)
-numpy_valid_bbox_list = pp.BoundingBoxesToNumpyArray(valid_bbox_list)
-
-model.compile(optimizer='adam',
+bigModel.compile(optimizer='adam',
               #loss='mean_squared_error' ,
-              loss = 'mean_squared_error',
+              loss = 'mean_absolute_error',
               # loss='binary_crossentropy',
               metrics=['accuracy'])
+
 # Assuming your labels are correctly shaped, you can now fit the model
-H = model.fit(numpy_train_images, numpy_train_bbox_list, epochs = 256, validation_data=(numpy_valid_images, numpy_valid_bbox_list))
+H = bigModel.fit(numpy_train_images, numpy_train_bbox_list, epochs = 31, batch_size=batch_size, validation_data=(numpy_valid_images, numpy_valid_bbox_list))
 
-validation_loss = model.evaluate(numpy_valid_images, numpy_valid_bbox_list)
+validation_loss = bigModel.evaluate(numpy_valid_images, numpy_valid_bbox_list)
 
-S = model.summary()
+S = bigModel.summary()
 
 print(H.history)
 print(S)
+print(f'validation loss bigger model: {validation_loss}')
 
-
-
-print(f'validation loss: {validation_loss}')
+# Assuming `numpy_valid_images` is your validation set images and the model is named `smallModel`
+predictions = bigModel.predict(numpy_valid_images)
+for i in range(len(numpy_valid_images)):
+    print(f'validate box" {numpy_valid_bbox_list[i]}')
+    print(f'predicted box" {predictions[i]}')
+    
+    iou = im.calculate_iou(predictions[i], numpy_valid_bbox_list[i])
+    print("IoU:", iou)
+    
+    im.draw_bounding_boxes(numpy_valid_images[i], numpy_valid_bbox_list[i], predictions[i])

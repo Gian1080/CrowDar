@@ -40,13 +40,16 @@ def CountSingleCrows(json_data):
 def GetSingleCrowsIDs(json_data):
     number_of_images = len(json_data['images']) 
     IDs = []
-    for id in range(number_of_images+1):   
+    for id in range(number_of_images + 1):   
         number_of_crows = 0 
         for datapoint in json_data['annotations']:
             if datapoint['image_id'] == id:
                 number_of_crows += 1
         if number_of_crows == 1:
+            print(f"Adding {id}")
             IDs.append(id)
+        else:
+            print(f'skipping {id} number of crows: {number_of_crows}')
     print(len(IDs))
     return IDs
 
@@ -61,7 +64,7 @@ def GetListOfPaths(IDs, json_data, prefix):
 
 def GetBoundingBoxByID(ID, json_data):
     for annotation in json_data['annotations']:
-        if annotation['id'] == ID:
+        if annotation['image_id'] == ID:
             return annotation['bbox']
         
 def GetBoundingBoxesByIDs(IDs, json_data):
