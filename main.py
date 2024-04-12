@@ -153,6 +153,7 @@ for epoch in crow_epochs:
         "batch_size": batch_size,
         "epochs": epoch
         }
+    
     # Capture training and validation results
     training_loss = H.history['loss'][-1]  # Last training loss
     training_accuracy = H.history['accuracy'][-1]  # Last training accuracy

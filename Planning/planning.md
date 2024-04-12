@@ -72,4 +72,3 @@
 - **Afternoon:**
   - Make final adjustments based on self-review.
   - Submit report and push final version to GitHub.
-

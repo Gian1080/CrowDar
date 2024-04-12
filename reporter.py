@@ -1,12 +1,24 @@
 import json
 import time
-import numpy as np
 import sys
 
 def create_test_report(model, history, test_results, config, save_path="test_report.json"):
+    """
+    Creates a JSON report of test results and model configuration.
+    
+    Parameters:
+        model (keras.Model): The trained model.
+        history (dict): Training history object containing metrics data.
+        test_results (dict): Dictionary containing test loss and accuracy.
+        config (dict): Configuration used for the model, including loss and optimizer.
+        save_path (str): Path where the report JSON file will be saved.
+
+    Returns:
+        dict: A dictionary containing the full report.
+    """
     report = {
         "Model Details": {
-            "Architecture": str(model),
+            "Architecture": str(model.summary()),
             "Parameters": model.count_params(),
             "Loss Function": config['loss_function'],
             "Optimizer": config['optimizer']
@@ -25,7 +37,7 @@ def create_test_report(model, history, test_results, config, save_path="test_rep
         }
     }
 
-    with open(save_path, 'w') as f:
-        json.dump(report, f, indent=4)
+    with open(save_path, 'w') as file:
+        json.dump(report, file, indent=4)
 
     return report
