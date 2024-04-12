@@ -114,7 +114,7 @@ for bbox in numpy_test_bbox_list:
     pp.AppenBoundingBoxToNumpyArray(numpy_train_bbox_list, bbox)
 
 #fill with prime numbers
-crow_epochs = [1, 3]
+crow_epochs = [5, 10, 25, 50]
 # Get the current date and time
 now = datetime.now()
 date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
