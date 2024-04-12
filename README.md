@@ -34,6 +34,6 @@ To set up this project locally and start observing the crows and jackdaws, follo
 1. **Clone the repository:**
    Clone the project repository by running the following command in your terminal:
    ```bash
-   git clone https://github.com/jouwgebruikersnaam/projectnaam.git
-   cd projectnaam
+   git clone https://github.com/Gian1080/CrowDar.git
+   cd CrowDar
 
