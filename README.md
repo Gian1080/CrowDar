@@ -8,13 +8,13 @@ Welcome to my birdwatching paradise—or as I like to call it, the CrowCam Proje
 
 However, there's a small hitch in my birdwatching saga. Every time I excitedly whip open my curtains to check on my avian friends, they scatter in a flurry of panic. It seems my enthusiasm is a bit too much for these cautious creatures. To solve this problem without missing out on their delightful antics, I've turned to technology for a solution.
 
-Enter the CrowCam! It's a simple yet brilliant setup involving a webcam that keeps an eye on the balcony. With a bit of coding magic and some machine learning, this system not only lets me watch these birds undisturbed but also sends me a nifty notification whenever a crow-like bird is spotted. This way, I can observe their behavior, see what treats they prefer, and enjoy my morning coffee without causing a feathered frenzy.
+Enter CrowDar! It's a simple yet brilliant setup involving a webcam that keeps an eye on the balcony. With a bit of coding magic and some machine learning, this system not only lets me watch these birds undisturbed but also sends me a nifty notification whenever a crow-like bird is spotted. This way, I can observe their behavior, see what treats they prefer, and enjoy my morning coffee without causing a feathered frenzy.
 
 So, whether you're a fellow bird enthusiast, a tech geek, or just here for some light reading, I hope you find this project both amusing and inspiring. Let’s dive into the world of backyard ornithology and smart technology combined, all from the comfort of our screens!
 
 ## Technologies
 
-The CrowCam Project harnesses a variety of technologies to bring the fascinating world of crows and jackdaws right to your screen, without startling them away. Here’s a breakdown of the tech stack that makes it all possible:
+The CrowDar Project harnesses a variety of technologies to bring the fascinating world of crows and jackdaws right to your screen, without startling them away. Here’s a breakdown of the tech stack that makes it all possible:
 
 - **Python**: The backbone of our project, Python's versatility allows us to handle everything from image processing to running machine learning models seamlessly.
 - **TensorFlow and Keras**: These powerful libraries are at the heart of our machine learning operations, enabling us to train models that can identify different bird species from webcam images.
@@ -34,6 +34,36 @@ To set up this project locally and start observing the crows and jackdaws, follo
 1. **Clone the repository:**
    Clone the project repository by running the following command in your terminal:
    ```bash
+   cd MyDestinationFolder
    git clone https://github.com/Gian1080/CrowDar.git
    cd CrowDar
 
+2. **Create a Virtual Environment (Recommended):**
+   To avoid conflicts with other Python packages, it's a good practice to create a virtual environment. Use the following commands to create and activate a virtual environment:
+
+   For Windows:
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+   For macOS and Linux:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. **Install Dependencies:**
+Once the virtual environment is activated, install the required Python packages specified in the requirements.txt file:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+   Run the Application:
+   After installing all dependencies, run the application using:
+
+   ```bash
+   python app.py
+   ```
+   Replace app.py with the actual entry file of your project if it's different.
+
+4. **Deactivate the Virtual Environment:**
+When you are done, you can deactivate the virtual environment by simply running:

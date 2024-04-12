@@ -1,10 +1,12 @@
 import preprocessing as pp
 import postprocessing as post
+import reporter as rep
 import directory as dir
 import imaging as im
 import json
+import os
 from keras import layers, models
-import datetime
+from datetime import datetime
 
 print('')
 
@@ -23,8 +25,11 @@ valid_annotation = json.load(open(f'{valid_dir}{annotation_dir}'))
 
 #ID nummers van geschikte foto's
 train_ids = pp.GetSingleCrowsIDs(train_annotation)
+print(f'train_ids: {len(train_ids)}')
 test_ids = pp.GetSingleCrowsIDs(test_annotation)
+print(f'test_ids: {len(test_ids)}')
 valid_ids = pp.GetSingleCrowsIDs(valid_annotation)
+print(f'valid_ids: {len(valid_ids)}')
 
 #Paden naar afbeeldingen bij geschikte foto's
 train_paths = pp.GetListOfPaths(train_ids, train_annotation, train_dir)
@@ -67,9 +72,9 @@ numpy_valid_bbox_list = pp.BoundingBoxesToNumpyArray(valid_bbox_list)
 img_height = 640
 img_width = 640
 batch_size = 16
-epoch_count = 13
 
-bigModel = models.Sequential([
+#creation model
+crowDar = models.Sequential([
 
     layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
     layers.MaxPooling2D(2, 2),
@@ -98,7 +103,7 @@ bigModel = models.Sequential([
 ])
 
 
-bigModel.compile(optimizer='adam',
+crowDar.compile(optimizer='adam',
               loss = 'mean_absolute_error',
               metrics=['accuracy'])
 
@@ -109,23 +114,22 @@ for bbox in numpy_test_bbox_list:
     pp.AppenBoundingBoxToNumpyArray(numpy_train_bbox_list, bbox)
 
 #fill with prime numbers
-crow_epochs = [1, 3, 5]
+crow_epochs = [1, 3]
 # Get the current date and time
-now = datetime.datetime.now()
+now = datetime.now()
 date_time = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-for epoch in crow_epochs:    
+for epoch in crow_epochs:
+    start_time = datetime.now() 
     # create a unique directory for each epoch
     unique_dir_name = dir.create_unique_result_directory(epoch, date_time)
     # fit/train the model
-    H = bigModel.fit(numpy_train_images, numpy_train_bbox_list, epochs = epoch, batch_size=batch_size, validation_data=(numpy_valid_images, numpy_valid_bbox_list))
-    validation_loss = bigModel.evaluate(numpy_valid_images, numpy_valid_bbox_list)
-    S = bigModel.summary()
-    print(H.history)
-    print(S)
+    H = crowDar.fit(numpy_train_images, numpy_train_bbox_list, epochs = epoch, batch_size=batch_size, validation_data=(numpy_valid_images, numpy_valid_bbox_list))
+    validation_loss = crowDar.evaluate(numpy_valid_images, numpy_valid_bbox_list)
+    S = crowDar.summary()
 
     # Assuming `numpy_valid_images` is your validation set images and the model is named `smallModel`
-    predictions = bigModel.predict(numpy_valid_images)
+    predictions = crowDar.predict(numpy_valid_images)
     average = 0
     counter = 0
     for i in range(len(numpy_valid_images)):
@@ -134,4 +138,34 @@ for epoch in crow_epochs:
         average += iou
         im.draw_bounding_boxes(i, iou, numpy_valid_images[i], numpy_valid_bbox_list[i], predictions[i], epoch, unique_dir_name)
         
-    print(f'average iou: {average/counter} @ epoch {epoch}')
+
+    # Define the directory path for the results
+    directory = os.path.join('Results', f'{date_time}', f'_epoch_{epoch}')
+    end_time = datetime.now()
+    duration = end_time - start_time
+    # Create the directory if it does not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    config = {
+        "loss_function": "mean_absolute_error",
+        "optimizer": "adam",
+        "batch_size": batch_size,
+        "epochs": epoch
+        }
+    # Capture training and validation results
+    training_loss = H.history['loss'][-1]  # Last training loss
+    training_accuracy = H.history['accuracy'][-1]  # Last training accuracy
+    validation_loss = H.history['val_loss'][-1]  # Last validation loss
+    validation_accuracy = H.history['val_accuracy'][-1]  # Last validation accuracy
+    
+    test_results = {
+        "loss": training_loss,
+        "accuracy": training_accuracy,
+        "duration": duration
+    }
+    
+    file_path = os.path.join(directory, f'results_{epoch}_meta_info.json')
+    
+    #create a report for testing and analyses purposes
+    report = rep.create_test_report(crowDar, H.history, test_results, config, file_path)
